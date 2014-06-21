@@ -19,13 +19,29 @@ ApplicationWindow {
         }
     }
 
-    Button {
-        text: qsTr("Inject")
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        onClicked: {
-            Frida.localSystem.inject(script, 1234);
+    TableView {
+        id: processes
+        height: parent.height
+        TableViewColumn {
+            role: "smallIcon"
+            width: 16
+            delegate: Image {
+                source: styleData.value
+                fillMode: Image.Pad
+            }
         }
+        TableViewColumn { role: "pid"; title: "Pid"; width: 50 }
+        TableViewColumn { role: "name"; title: "Name"; width: 100 }
+        model: processModel
+        onActivated: {
+            Frida.localSystem.inject(script,
+                processModel.get(currentRow).pid);
+        }
+    }
+
+    ProcessListModel {
+        id: processModel
+        device: Frida.localSystem
     }
 
     Script {
