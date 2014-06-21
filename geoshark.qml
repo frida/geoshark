@@ -46,6 +46,6 @@ ApplicationWindow {
 
     Script {
         id: script
-        source: "console.log('Hello from Frida!');"
+        url: Qt.resolvedUrl("./agent.js")
     }
 }
