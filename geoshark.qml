@@ -79,6 +79,22 @@ ApplicationWindow {
         }
         onMessage: {
             messages.append(JSON.stringify(object) + "\n");
+            if (object.type === "send") {
+                var stanza = object.payload;
+                if (stanza.name === "new-ip-address") {
+                    var ip = stanza.payload;
+                    var xhr = new XMLHttpRequest();
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === XMLHttpRequest.DONE) {
+                            var location = JSON.parse(xhr.responseText);
+                            messages.append("Resolved " + ip +
+                                " to " + JSON.stringify(location) + "\n");
+                        }
+                    };
+                    xhr.open("GET", "http://freegeoip.net/json/" + ip);
+                    xhr.send();
+                }
+            }
         }
     }
 }
