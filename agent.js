@@ -43,6 +43,7 @@ function isSocketFunction(name) {
         return name.indexOf(prefix) === 0;
     });
 }
+var ips = {};
 Module.enumerateExports(socketModule[Process.platform], {
     onMatch: function (exp) {
         if (exp.type === "function"
@@ -58,14 +59,13 @@ Module.enumerateExports(socketModule[Process.platform], {
                     var address = Socket.peerAddress(fd);
                     if (address === null)
                         return;
-                    send({
-                        name: "socket-activity",
-                        payload: {
-                            fd: fd,
-                            func: exp.name,
-                            address: address
-                        }
-                    });
+                    if (!ips[address.ip]) {
+                        ips[address.ip] = true;
+                        send({
+                            name: "new-ip-address",
+                            payload: address.ip
+                        });
+                    }
                 }
             });
         }
