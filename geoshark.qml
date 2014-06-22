@@ -1,5 +1,6 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.1
+import QtQuick.Dialogs 1.1
 import QtQuick.Window 2.0
 import QtQuick.Layouts 1.1
 
@@ -58,6 +59,12 @@ ApplicationWindow {
         }
     }
 
+    MessageDialog {
+        id: errorDialog
+        title: "Error"
+        icon: StandardIcon.Critical
+    }
+
     ProcessListModel {
         id: processModel
         device: Frida.localSystem
@@ -66,6 +73,10 @@ ApplicationWindow {
     Script {
         id: script
         url: Qt.resolvedUrl("./agent.js")
+        onError: {
+            errorDialog.text = message;
+            errorDialog.open();
+        }
         onMessage: {
             messages.append(JSON.stringify(object) + "\n");
         }
