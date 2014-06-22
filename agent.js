@@ -25,3 +25,51 @@ send({
         threadId: Process.getCurrentThreadId()
     }
 });
+
+var socketModule = {
+    "windows": "ws2_32.dll",
+    "darwin": "libSystem.B.dylib",
+    "linux": "libc-2.19.so"
+};
+var socketFunctionPrefixes = [
+    "connect",
+    "recv",
+    "send",
+    "read",
+    "write"
+];
+function isSocketFunction(name) {
+    return socketFunctionPrefixes.some(function (prefix) {
+        return name.indexOf(prefix) === 0;
+    });
+}
+Module.enumerateExports(socketModule[Process.platform], {
+    onMatch: function (exp) {
+        if (exp.type === "function"
+                && isSocketFunction(exp.name)) {
+            Interceptor.attach(exp.address, {
+                onEnter: function (args) {
+                    this.fd = args[0].toInt32();
+                },
+                onLeave: function (retval) {
+                    var fd = this.fd;
+                    if (Socket.type(fd) !== "tcp")
+                        return;
+                    var address = Socket.peerAddress(fd);
+                    if (address === null)
+                        return;
+                    send({
+                        name: "socket-activity",
+                        payload: {
+                            fd: fd,
+                            func: exp.name,
+                            address: address
+                        }
+                    });
+                }
+            });
+        }
+    },
+    onComplete: function () {
+    }
+});
