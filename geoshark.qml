@@ -25,24 +25,51 @@ ApplicationWindow {
     RowLayout {
         anchors.fill: parent
         spacing: 0
-        TableView {
-            id: processes
+        ColumnLayout {
             Layout.fillHeight: true
-            TableViewColumn {
-                role: "smallIcon"
-                width: 16
-                delegate: Image {
-                    source: styleData.value
-                    fillMode: Image.Pad
+            spacing: 0
+            TableView {
+                id: devices
+                TableViewColumn {
+                    role: "icon"
+                    width: 16
+                    delegate: Image {
+                        source: styleData.value
+                        fillMode: Image.Pad
+                    }
                 }
+                TableViewColumn { role: "name"; title: "Name";
+                                  width: 100 }
+                model: deviceModel
             }
-            TableViewColumn { role: "pid"; title: "Pid"; width: 50 }
-            TableViewColumn { role: "name"; title: "Name";
-                              width: 100 }
-            model: processModel
-            onActivated: {
-                Frida.localSystem.inject(script,
-                    processModel.get(currentRow).pid);
+            Item {
+                width: processes.width
+                Layout.fillHeight: true
+                TableView {
+                    id: processes
+                    height: parent.height
+                    TableViewColumn {
+                        role: "smallIcon"
+                        width: 16
+                        delegate: Image {
+                            source: styleData.value
+                            fillMode: Image.Pad
+                        }
+                    }
+                    TableViewColumn { role: "pid"; title: "Pid";
+                                      width: 50 }
+                    TableViewColumn { role: "name"; title: "Name";
+                                      width: 100 }
+                    model: processModel
+                    onActivated: {
+                        deviceModel.get(devices.currentRow).inject(
+                            script, processModel.get(currentRow).pid);
+                    }
+                }
+                BusyIndicator {
+                    anchors.centerIn: parent
+                    running: processModel.isLoading
+                }
             }
         }
         ColumnLayout {
@@ -82,9 +109,17 @@ ApplicationWindow {
         icon: StandardIcon.Critical
     }
 
+    DeviceListModel {
+        id: deviceModel
+    }
+
     ProcessListModel {
         id: processModel
-        device: Frida.localSystem
+        device: devices.currentRow !== -1 ? deviceModel.get(devices.currentRow) : null
+        onError: {
+            errorDialog.text = message;
+            errorDialog.open();
+        }
     }
 
     Script {
