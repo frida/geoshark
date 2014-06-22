@@ -3,6 +3,7 @@ import QtQuick.Controls 1.1
 import QtQuick.Dialogs 1.1
 import QtQuick.Window 2.0
 import QtQuick.Layouts 1.1
+import QtWebKit.experimental 1.0
 
 import Frida 1.0
 
@@ -44,11 +45,27 @@ ApplicationWindow {
                     processModel.get(currentRow).pid);
             }
         }
-        TextArea {
-            id: messages
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            readOnly: true
+            WebView {
+                id: map
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                url: Qt.resolvedUrl("./map.html")
+                function addMarker(ip, lat, lng) {
+                    map.experimental.evaluateJavaScript(
+                        "addMarker(\"" + ip + "\", " +
+                            lat + ", " + lng + ");"
+                    );
+                }
+            }
+            TextArea {
+                id: messages
+                Layout.fillWidth: true
+                height: 200
+                readOnly: true
+            }
         }
         Button {
             Layout.alignment: Qt.AlignBottom
@@ -89,6 +106,7 @@ ApplicationWindow {
                             var location = JSON.parse(xhr.responseText);
                             messages.append("Resolved " + ip +
                                 " to " + JSON.stringify(location) + "\n");
+                            map.addMarker(ip, location.latitude, location.longitude);
                         }
                     };
                     xhr.open("GET", "http://freegeoip.net/json/" + ip);

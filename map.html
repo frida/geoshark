@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport"
+            content="initial-scale=1.0, user-scalable=no" />
+        <style type="text/css">
+            html { height: 100% }
+            body { height: 100%; margin: 0; padding: 0 }
+            #map-canvas { height: 100% }
+        </style>
+        <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY">
+        </script>
+        <script type="text/javascript">
+            var map = null;
+            var pending = [];
+            function initialize() {
+                var mapOptions = {
+                    center: new google.maps.LatLng(
+                        59.9155441,
+                        10.7154132),
+                    zoom: 3
+                };
+                map = new google.maps.Map(
+                    document.getElementById("map-canvas"),
+                    mapOptions);
+                pending.splice(0, pending.length).forEach(
+                    function (f) { f(); }
+                );
+            }
+            function addMarker(ip, lat, lng) {
+                if (map === null) {
+                    pending.push(function () {
+                        addMarker(ip, lat, lng);
+                    });
+                    return;
+                }
+                var position = new google.maps.LatLng(lat, lng);
+                map.panTo(position);
+                var marker = new google.maps.Marker({
+                    position: position,
+                    title: ip,
+                    animation: google.maps.Animation.DROP
+                });
+                marker.setMap(map);
+            }
+            google.maps.event.addDomListener(window, "load",
+                initialize);
+        </script>
+    </head>
+    <body>
+        <div id="map-canvas" />
+    </body>
+</html>
